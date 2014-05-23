@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.WindowsAPICodePack.Taskbar;
+using System;
+using System.ComponentModel;
 using System.Media;
 using System.Net;
 using System.Windows.Forms;
@@ -20,29 +22,26 @@ namespace CaveTubeSaveSharp
             if (textBox1.Text != "")
             {
                 SaveFileDialog sfd = new SaveFileDialog();
-                sfd.FileName = textBox1.Text + ".flv";
+                sfd.FileName = textBox1.Text;
                 sfd.Filter = "Flash Video File(*.flv)|*.flv";
                 sfd.Title = "Save";
 
                 if (sfd.ShowDialog() == DialogResult.OK)
                 {
-                    string urls = "http://rec.cavelis.net/media/" + textBox1.Text + ".flv";
-
-                    HttpWebRequest webreq = (HttpWebRequest)WebRequest.Create(urls);
+					HttpWebRequest webreq = (HttpWebRequest)WebRequest.Create(textBox2.Text + textBox1.Text);
                     webreq.Referer = "http://gae.cavelis.net/view/";
                     HttpWebResponse webres = null;
                     try
                     {
-                        webres = (System.Net.HttpWebResponse)webreq.GetResponse();
+                        webres = (HttpWebResponse)webreq.GetResponse();
                         WebClient wc = new WebClient();
-                        Uri url = new Uri("http://rec.cavelis.net/media/" + textBox1.Text + ".flv");
                         string filename = sfd.FileName;
                         wc.Headers.Add("Referer", "http://gae.cavelis.net/view/");
                         wc.DownloadProgressChanged += wc_DownloadProgressChanged;
                         wc.DownloadFileCompleted += wc_DownloadFileCompleted;
-                        wc.DownloadFileAsync(url, filename);
+						wc.DownloadFileAsync(new Uri(textBox2.Text + textBox1.Text), filename);
                     }
-                    catch (System.Net.WebException ex)
+                    catch (WebException ex)
                     {
                         if (ex.Status == System.Net.WebExceptionStatus.ProtocolError)
                         {
@@ -74,16 +73,16 @@ namespace CaveTubeSaveSharp
 
         private void wc_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
         {
-            label2.Text = e.ProgressPercentage + "% " + e.BytesReceived + " Byte";
+            label2.Text = e.ProgressPercentage + "% " + (e.BytesReceived / 1024) + " KByte";
             progressBar1.Value = e.ProgressPercentage;
-            Microsoft.WindowsAPICodePack.Taskbar.TaskbarManager.Instance.SetProgressValue(e.ProgressPercentage, 100);
+            TaskbarManager.Instance.SetProgressValue(e.ProgressPercentage, 100);
         }
 
-        private void wc_DownloadFileCompleted(object sender, System.ComponentModel.AsyncCompletedEventArgs e)
+        private void wc_DownloadFileCompleted(object sender, AsyncCompletedEventArgs e)
         {
             SystemSounds.Beep.Play();
             label2.Text = "Done!!";
-            Microsoft.WindowsAPICodePack.Taskbar.TaskbarManager.Instance.SetProgressValue(0, 100);
+            TaskbarManager.Instance.SetProgressValue(0, 100);
         }
 
         private void button2_Click(object sender, EventArgs e)
